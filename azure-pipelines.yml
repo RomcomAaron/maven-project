@@ -1,13 +1,22 @@
 trigger:
 - main
-pool: sample
+
+pool: sample   # your self-hosted agent
+
 steps:
-- task: Maven@4
-  inputs:
-    mavenPomFile: 'pom.xml'
-    mavenOptions: '-Xmx3072m'
-    javaHomeOption: 'JDKVersion'
-    jdkArchitectureOption: 'x64'
-    publishJUnitResults: true
-    testResultsFiles: '**/surefire-reports/TEST-*.xml'
-    goals: 'compile test'
+# Debug: check what Java is currently available
+- script: |
+    echo "JAVA_HOME=$JAVA_HOME"
+    java -version || true
+    /usr/libexec/java_home -V || true
+  displayName: 'Check installed JDKs'
+
+# Force Java 21 manually (macOS agent)
+- script: |
+    export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+    export PATH=$JAVA_HOME/bin:$PATH
+    echo "Using JAVA_HOME=$JAVA_HOME"
+    java -version
+    mvn -version
+    mvn clean compile test
+  displayName: 'Build with Java 21'
